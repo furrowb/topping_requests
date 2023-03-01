@@ -14,9 +14,9 @@ class UserToppingService(@Autowired private val toppingRepo: RequestedToppingRep
     fun createUserToppings(email: String, toppings: List<String>): UserToppings {
         val user = userRepository.getUserByEmail(email) ?: userRepository.createUser(email)
         toppingRepo.deleteToppingsForUser(user.id)
-        val createdToppings = toppings.mapNotNull {
-            toppingRepo.createTopping(user.id, it)
-        }
+        val createdToppings = toppings.toSet()
+            .mapNotNull { toppingRepo.createTopping(user.id, it) }
+            .sortedBy { it.toppingName }
         return UserToppings(user, createdToppings)
     }
 
