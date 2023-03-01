@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 @Repository
 class UserRepository(@Autowired private val dslContext: DefaultDSLContext) {
@@ -17,7 +16,7 @@ class UserRepository(@Autowired private val dslContext: DefaultDSLContext) {
     fun createUser(email: String): User {
         val userWithId = dslContext.insertInto(USERS)
             .set(USERS.EMAIL, email)
-            .set(USERS.CREATED_DATE, LocalDate.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_DATE))
+            .set(USERS.CREATED_DATE, LocalDate.now(ZoneOffset.UTC))
             .returning(USERS.ID)
             .fetchOne() ?: throw Exception("Unable to insert user")
         // Due to a bug with Jooq, I can't retrieve the entire record from insert/update/delete commands, but we can retrieve a single field.

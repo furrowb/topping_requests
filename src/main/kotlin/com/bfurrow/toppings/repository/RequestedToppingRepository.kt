@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 @Repository
 class RequestedToppingRepository(@Autowired private val dslContext: DefaultDSLContext) {
@@ -21,7 +20,7 @@ class RequestedToppingRepository(@Autowired private val dslContext: DefaultDSLCo
         val inserts = dslContext.insertInto(REQUESTED_TOPPINGS)
             .set(REQUESTED_TOPPINGS.USER_ID, userId)
             .set(REQUESTED_TOPPINGS.TOPPING, topping)
-            .set(REQUESTED_TOPPINGS.CREATED_DATE, LocalDate.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_DATE))
+            .set(REQUESTED_TOPPINGS.CREATED_DATE, LocalDate.now(ZoneOffset.UTC))
             .execute()
         if (inserts == 0) {
             throw Exception("Error creating topping record for user $userId for topping $topping")
@@ -65,8 +64,6 @@ class RequestedToppingRepository(@Autowired private val dslContext: DefaultDSLCo
     }
 
     private fun RequestedToppingsRecord.toRequestedTopping(): RequestedTopping {
-        val parser: DateTimeFormatter = DateTimeFormatter.ISO_DATE
-        val date = parser.parse(this.createdDate)
-        return RequestedTopping(this.userId!!, this.topping!!, LocalDate.from(date))
+        return RequestedTopping(this.userId!!, this.topping!!, this.createdDate!!)
     }
 }
