@@ -1,5 +1,6 @@
 package com.bfurrow.toppings.config
 
+import org.jooq.SQLDialect
 import org.jooq.impl.DataSourceConnectionProvider
 import org.jooq.impl.DefaultConfiguration
 import org.jooq.impl.DefaultDSLContext
@@ -25,6 +26,7 @@ class InitialConfiguration(@Autowired private val datasource: DataSource) {
         val jooqConfiguration = DefaultConfiguration()
         jooqConfiguration.set(connectionProvider())
         jooqConfiguration.set(DefaultExecuteListenerProvider(JooqExceptionTranslator()))
+        jooqConfiguration.setSQLDialect(SQLDialect.SQLITE)
         return jooqConfiguration
     }
 }

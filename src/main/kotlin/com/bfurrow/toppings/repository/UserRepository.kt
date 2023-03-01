@@ -2,6 +2,7 @@ package com.bfurrow.toppings.repository
 
 import com.bfurrow.toppings.model.User
 import com.bfurrow.toppings.tables.Users.Companion.USERS
+import com.bfurrow.toppings.tables.records.UsersRecord
 import org.jooq.impl.DefaultDSLContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
@@ -24,14 +25,32 @@ class UserRepository(@Autowired private val dslContext: DefaultDSLContext) {
         val data = dslContext.selectFrom(USERS)
             .where(USERS.ID.eq(userWithId.id))
             .fetchOne() ?: throw Exception("Unable to find inserted user")
-        return User(data.id!!, data.email!!)
+        return data.toUser()
+    }
+
+    @Transactional
+    fun updateUserEmail(id: Int, email: String): User? {
+        // Jooq bug required the field to be aliased to work. Otherwise, it generated incorrect SQL
+        val emailAlias = USERS.EMAIL.`as`("email")
+        val updatedCount = dslContext.update(USERS)
+            .set(emailAlias, email)
+            .where(USERS.ID.eq(id))
+            .execute()
+        if (updatedCount == 0) {
+            return null
+        }
+        // Due to a bug with Jooq, I can't retrieve the entire record from insert/update/delete commands.
+        // Instead, we will just have to query for the record ourselves.
+        return dslContext.selectFrom(USERS)
+                .where(USERS.ID.eq(id))
+                .fetchOne()?.toUser()
     }
 
     fun getAllUsers(): List<User> {
         return dslContext.selectFrom(USERS)
             .fetch()
             .map {
-                User(it.id!!, it.email!!)
+                it.toUser()
             }
     }
 
@@ -46,7 +65,8 @@ class UserRepository(@Autowired private val dslContext: DefaultDSLContext) {
         val userRecord = dslContext.selectFrom(USERS)
             .where(USERS.EMAIL.eq(email))
             .fetchOne() ?: return null
-        return User(userRecord.id!!, userRecord.email!!)
+        return userRecord.toUser()
     }
 
+    private fun UsersRecord.toUser(): User = User(this.id!!, this.email!!)
 }

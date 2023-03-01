@@ -16,24 +16,22 @@ import java.time.ZoneOffset
 class RequestedToppingRepository(@Autowired private val dslContext: DefaultDSLContext) {
 
     @Transactional
-    fun createTopping(userId: Int, topping: String): RequestedTopping {
+    fun createTopping(userId: Int, topping: String): RequestedTopping? {
         val inserts = dslContext.insertInto(REQUESTED_TOPPINGS)
             .set(REQUESTED_TOPPINGS.USER_ID, userId)
             .set(REQUESTED_TOPPINGS.TOPPING, topping)
             .set(REQUESTED_TOPPINGS.CREATED_DATE, LocalDate.now(ZoneOffset.UTC))
+            .onConflictDoNothing()
             .execute()
         if (inserts == 0) {
-            throw Exception("Error creating topping record for user $userId for topping $topping")
+            return null
         }
         // Due to a bug with Jooq, I can't retrieve the entire record from insert/update/delete commands.
         // We can grab the record based on the input params and the query that separately.
         return dslContext.selectFrom(REQUESTED_TOPPINGS)
-            .where(REQUESTED_TOPPINGS.USER_ID.eq(userId))
-            .and(REQUESTED_TOPPINGS.TOPPING.eq(topping))
-            .fetchOne()
-            ?.let {
-                it.toRequestedTopping()
-            } ?: throw Exception("Unable to find created topping record for user $userId for topping $topping")
+                .where(REQUESTED_TOPPINGS.USER_ID.eq(userId))
+                .and(REQUESTED_TOPPINGS.TOPPING.eq(topping))
+                .fetchOne()?.toRequestedTopping()
     }
 
     @Transactional
