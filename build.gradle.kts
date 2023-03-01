@@ -1,3 +1,4 @@
+import nu.studer.gradle.jooq.JooqGenerate
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -17,14 +18,15 @@ repositories {
 	mavenCentral()
 }
 
+val sqliteVersion = "3.30.1"
+
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.flywaydb:flyway-core")
 	implementation("org.springframework.boot:spring-boot-starter-jooq")
-	implementation("org.xerial:sqlite-jdbc:3.30.1")
-	implementation("org.jooq:jooq:3.17.8")
-	jooqGenerator("org.xerial:sqlite-jdbc:3.30.1")
+	implementation("org.xerial:sqlite-jdbc:$sqliteVersion")
+	jooqGenerator("org.xerial:sqlite-jdbc:$sqliteVersion")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
@@ -46,7 +48,7 @@ flyway {
 }
 
 flyway.cleanDisabled = false
-tasks.withType<KotlinCompile> {
+tasks.withType<JooqGenerate> {
 	dependsOn("flywayMigrate")
 }
 
@@ -59,6 +61,7 @@ jooq {
 					url = jdbcUrl
 				}
 				generator.apply {
+					name = "org.jooq.codegen.KotlinGenerator"
 					target.apply {
 						packageName = "com.bfurrow.toppings"
 					}
@@ -68,6 +71,6 @@ jooq {
 	}
 }
 
-java.sourceSets["main"].java {
+kotlin.sourceSets["main"].kotlin {
 	srcDir("generated-src/jooq/main")
 }

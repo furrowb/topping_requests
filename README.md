@@ -16,3 +16,10 @@ need to figure out which toppings customers would want so that we know what to o
 - Persisting data between runs
 - Creativity for adding additional features
 - A special endpoint for listing your personal topping choice!
+
+## How to run
+
+1. Be sure to have the environment variable `DATABASE_FILE` setup in your environment/terminal
+2. Have at least Java version 17 installed
+3. Run `./gradlew bootRun` on Mac/Linux or `gradlew.exe bootRun` on Windows, which should also run the database migrations and start the application
+4. Use your favorite HTTP client to run queries against `localhost:8080/v1/toppings`
