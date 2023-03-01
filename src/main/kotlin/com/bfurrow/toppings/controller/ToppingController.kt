@@ -33,4 +33,12 @@ class ToppingController(@Autowired private val userToppingService: UserToppingSe
     fun getUserToppings(@PathVariable("id") userId: Int): ResponseEntity<List<RequestedTopping>> {
         return ResponseEntity.status(HttpStatus.OK).body(userToppingService.getUserToppings(userId))
     }
+
+    /**
+     * Gets the best (my personal) pizza topping preferences
+     */
+    @GetMapping("/best")
+    fun getBestToppings(): ResponseEntity<List<RequestedTopping>> {
+        return ResponseEntity.status(HttpStatus.OK).body(userToppingService.getUserToppings(1))
+    }
 }
