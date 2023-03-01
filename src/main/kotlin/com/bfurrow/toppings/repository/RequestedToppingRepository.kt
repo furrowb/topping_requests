@@ -55,6 +55,15 @@ class RequestedToppingRepository(@Autowired private val dslContext: DefaultDSLCo
             }
     }
 
+    fun getUserToppings(userId: Int): List<RequestedTopping> {
+        return dslContext.selectFrom(REQUESTED_TOPPINGS)
+            .where(REQUESTED_TOPPINGS.USER_ID.eq(userId))
+            .fetch()
+            .map {
+                it.toRequestedTopping()
+            }
+    }
+
     private fun RequestedToppingsRecord.toRequestedTopping(): RequestedTopping {
         val parser: DateTimeFormatter = DateTimeFormatter.ISO_DATE
         val date = parser.parse(this.createdDate)
