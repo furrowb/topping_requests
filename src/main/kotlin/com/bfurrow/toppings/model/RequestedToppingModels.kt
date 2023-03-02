@@ -7,6 +7,11 @@ data class RequestedToppingCount(
     val count: Int
 )
 
+data class RequestedToppingCountByLocation(
+    val location: String,
+    val toppings: List<RequestedToppingCount>
+)
+
 data class RequestedTopping(
     val userId: Int,
     val toppingName: String,

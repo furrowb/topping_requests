@@ -2,7 +2,9 @@ package com.bfurrow.toppings.repository
 
 import com.bfurrow.toppings.model.RequestedTopping
 import com.bfurrow.toppings.model.RequestedToppingCount
+import com.bfurrow.toppings.model.RequestedToppingCountByLocation
 import com.bfurrow.toppings.tables.RequestedToppings.Companion.REQUESTED_TOPPINGS
+import com.bfurrow.toppings.tables.Users.Companion.USERS
 import com.bfurrow.toppings.tables.records.RequestedToppingsRecord
 import org.jooq.impl.DSL
 import org.jooq.impl.DefaultDSLContext
@@ -34,7 +36,7 @@ class RequestedToppingRepository(@Autowired private val dslContext: DefaultDSLCo
             .execute() > 0
     }
 
-    fun getRankedToppings(): List<RequestedToppingCount> {
+    fun getToppingsRank(): List<RequestedToppingCount> {
         return dslContext.select(REQUESTED_TOPPINGS.TOPPING, DSL.count())
             .from(REQUESTED_TOPPINGS)
             .groupBy(REQUESTED_TOPPINGS.TOPPING)
@@ -43,6 +45,36 @@ class RequestedToppingRepository(@Autowired private val dslContext: DefaultDSLCo
             .map {
                 RequestedToppingCount(it.component1()!!, it.component2()!!)
             }
+    }
+
+    fun getToppingRankByLocation(): List<RequestedToppingCountByLocation> {
+        val locationGrouping = mutableMapOf<String, List<RequestedToppingCount>>()
+        dslContext.select(REQUESTED_TOPPINGS.TOPPING, USERS.LOCATION, DSL.count())
+            .from(REQUESTED_TOPPINGS)
+            .innerJoin(USERS).on(USERS.ID.eq(REQUESTED_TOPPINGS.USER_ID))
+            .groupBy(REQUESTED_TOPPINGS.TOPPING, USERS.LOCATION)
+            .fetch()
+            .forEach {
+                val topping = it.component1()!!
+                val location = it.component2()?.lowercase()
+                val count = it.component3()
+                if (location != null) {
+                    locationGrouping.merge(location, listOf(RequestedToppingCount(topping, count))) { list1, list2 ->
+                        listOf(list1, list2).flatten()
+                    }
+                } else {
+                    locationGrouping.merge("unspecified", listOf(RequestedToppingCount(topping, count))) { list1, list2 ->
+                        listOf(list1, list2).flatten()
+                    }
+                }
+            }
+        return locationGrouping.map { keyValue ->
+            RequestedToppingCountByLocation(keyValue.key,
+                keyValue.value.sortedWith(
+                    compareByDescending<RequestedToppingCount> { it.count }.thenBy { it.toppingName }
+                )
+            )
+        }
     }
 
     fun getUserToppings(userId: Int): List<RequestedTopping> {

@@ -14,9 +14,14 @@ import java.time.ZoneOffset
 class UserRepository(@Autowired private val dslContext: DefaultDSLContext) {
 
     @Transactional
-    fun createUser(email: String): User {
+    fun createUser(email: String, location: String?): User {
         return dslContext.insertInto(USERS)
-            .set(USERS.EMAIL, email)
+            .set(USERS.EMAIL, email.lowercase())
+            .apply {
+                if (location != null) {
+                    this.set(USERS.LOCATION, location.lowercase())
+                }
+            }
             .set(USERS.CREATED_DATE, LocalDate.now(ZoneOffset.UTC))
             .returning()
             .fetchOne()
@@ -26,7 +31,7 @@ class UserRepository(@Autowired private val dslContext: DefaultDSLContext) {
     @Transactional
     fun updateUserEmail(id: Int, email: String): User? {
         val updateCount = dslContext.update(USERS)
-            .set(USERS.EMAIL, email)
+            .set(USERS.EMAIL, email.lowercase())
             .where(USERS.ID.eq(id))
             .execute()
         if (updateCount == 0) {
@@ -47,18 +52,18 @@ class UserRepository(@Autowired private val dslContext: DefaultDSLContext) {
     }
 
     fun getUserById(id: Int): User? {
-        val userRecord = dslContext.selectFrom(USERS)
+        return dslContext.selectFrom(USERS)
             .where(USERS.ID.eq(id))
-            .fetchOne() ?: return null
-        return User(userRecord.id!!, userRecord.email!!)
+            .fetchOne()
+            ?.toUser()
     }
 
     fun getUserByEmail(email: String): User? {
         val userRecord = dslContext.selectFrom(USERS)
-            .where(USERS.EMAIL.eq(email))
+            .where(USERS.EMAIL.endsWithIgnoreCase(email))
             .fetchOne() ?: return null
         return userRecord.toUser()
     }
 
-    private fun UsersRecord.toUser(): User = User(this.id!!, this.email!!)
+    private fun UsersRecord.toUser(): User = User(this.id!!, this.email!!, this.location)
 }

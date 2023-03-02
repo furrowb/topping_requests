@@ -2,6 +2,7 @@ package com.bfurrow.toppings.controller
 
 import com.bfurrow.toppings.model.RequestedTopping
 import com.bfurrow.toppings.model.RequestedToppingCount
+import com.bfurrow.toppings.model.RequestedToppingCountByLocation
 import com.bfurrow.toppings.model.UserToppings
 import com.bfurrow.toppings.model.http.CreateToppingRequest
 import com.bfurrow.toppings.service.UserToppingService
@@ -21,12 +22,17 @@ class ToppingController(@Autowired private val userToppingService: UserToppingSe
 
     @PostMapping("")
     fun createTopping(@RequestBody request: CreateToppingRequest): ResponseEntity<UserToppings> {
-        return ResponseEntity.status(HttpStatus.OK).body(userToppingService.createUserToppings(request.email, request.toppings))
+        return ResponseEntity.status(HttpStatus.OK).body(userToppingService.createUserToppings(request.email, request.toppings, request.location))
     }
 
     @GetMapping("/popularity")
     fun getToppingPopularity(): ResponseEntity<List<RequestedToppingCount>> {
-        return ResponseEntity.status(HttpStatus.OK).body(userToppingService.getPopularToppings())
+        return ResponseEntity.status(HttpStatus.OK).body(userToppingService.getToppingsRank())
+    }
+
+    @GetMapping("/popularity/location")
+    fun getToppingPopularityGroupedByLocation(): ResponseEntity<List<RequestedToppingCountByLocation>> {
+        return ResponseEntity.status(HttpStatus.OK).body(userToppingService.getToppingsRankByLocation())
     }
 
     @GetMapping("/users/{id}")
